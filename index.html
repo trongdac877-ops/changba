@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hành trình Việt Nam của Calc</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #000;
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  /* ════════════════════════════
+     LOADER
+  ════════════════════════════ */
+  #loader {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    transition: opacity 0.5s ease;
+  }
+  #loader.hide { opacity: 0; pointer-events: none; }
+
+  .btc-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    opacity: 0;
+    animation: fadeUp 0.45s ease 0.1s forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .btc-circle {
+    width: 52px; height: 52px;
+    background: #F7931A;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px rgba(247,147,26,0.35);
+  }
+  .btc-circle svg { width: 28px; height: 28px; }
+
+  .btc-ticker {
+    font-size: 11px; letter-spacing: 3px; font-weight: 500;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+  }
+
+  .btc-price-big {
+    font-size: 36px; font-weight: 200;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.92);
+    min-height: 46px;
+    line-height: 1;
+    transition: color 0.3s ease;
+  }
+  .btc-price-big.up   { color: #30d158; }
+  .btc-price-big.down { color: #ff453a; }
+
+  .btc-change {
+    font-size: 12px; font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.3);
+    min-height: 16px;
+    transition: color 0.3s ease;
+    letter-spacing: 0.3px;
+  }
+  .btc-change.up   { color: rgba(48,209,88,0.8); }
+  .btc-change.down { color: rgba(255,69,58,0.8); }
+
+  .loader-divider {
+    width: 1px; height: 24px;
+    background: rgba(255,255,255,0.08);
+    margin: 2px 0;
+  }
+
+  .progress-bar {
+    width: 140px; height: 2px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 1px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.7));
+    border-radius: 1px;
+    transition: width 0.04s linear;
+  }
+
+  /* ════════════════════════════
+     MAIN PAGE
+  ════════════════════════════ */
+  #page {
+    opacity: 0;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 68px 32px 68px;
+    transition: opacity 0.7s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #page.show { opacity: 1; }
+
+  /* ring */
+  .ring-container {
+    width: 280px; height: 280px;
+    margin-bottom: 60px; flex-shrink: 0;
+    opacity: 0; transform: scale(0.94);
+    transition: opacity 0.9s cubic-bezier(.22,.61,.36,1) 0.05s,
+                transform 0.9s cubic-bezier(.22,.61,.36,1) 0.05s;
+    will-change: transform, opacity;
+  }
+  #page.show .ring-container { opacity: 1; transform: scale(1); }
+  .ring-container svg { width: 100%; height: 100%; display: block; }
+
+  /* text blocks */
+  .info { text-align: center; width: 100%; max-width: 320px; }
+
+  .tagline {
+    font-size: 20px; font-weight: 400;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.55; margin-bottom: 28px;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease 0.3s, transform 0.6s ease 0.3s;
+  }
+  #page.show .tagline { opacity: 1; transform: translateY(0); }
+
+  .date-line {
+    font-size: 18px; font-weight: 400;
+    color: rgba(255,255,255,0.88); margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease 0.44s, transform 0.6s ease 0.44s;
+  }
+  #page.show .date-line { opacity: 1; transform: translateY(0); }
+
+  .time-line {
+    font-size: 18px; font-weight: 400;
+    color: rgba(255,255,255,0.88);
+    font-variant-numeric: tabular-nums; margin-bottom: 44px;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease 0.54s, transform 0.6s ease 0.54s;
+  }
+  #page.show .time-line { opacity: 1; transform: translateY(0); }
+
+  .btn-wrap {
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease 0.64s, transform 0.6s ease 0.64s;
+  }
+  #page.show .btn-wrap { opacity: 1; transform: translateY(0); }
+
+  .btn {
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.55);
+    border-radius: 50px; padding: 13px 54px;
+    font-size: 14px; font-weight: 400; letter-spacing: 3px;
+    color: #fff; background: transparent; cursor: pointer;
+    font-family: inherit; text-transform: uppercase;
+    transition: background 0.2s, border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .btn:hover  { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.7); }
+  .btn:active { background: rgba(255,255,255,0.13); }
+</style>
+</head>
+<body>
+
+<!-- ── LOADER ── -->
+<div id="loader" role="status" aria-label="Đang tải">
+  <div class="btc-wrap">
+    <div class="btc-circle" aria-hidden="true">
+      <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M37.8 24.2c.5-3.4-2.1-5.2-5.6-6.4l1.1-4.6-2.8-.7-1.1 4.4c-.7-.2-1.5-.4-2.2-.5l1.1-4.5-2.8-.7-1.1 4.6c-.6-.1-1.2-.3-1.8-.4l-3.8-.9-.7 3s2.1.5 2 .5c1.1.3 1.3 1 1.3 1.6L20 25.2h.3l-1.8 7.3c-.1.3-.5.8-1.3.6l-2.03-.5-1.37 3.2 3.6.9 1.97.51-1.13 4.6 2.77.7 1.13-4.63c.77.2 1.5.4 2.23.57l-1.1 4.6 2.8.7 1.13-4.6c4.67.87 8.17.53 9.63-3.7 1.2-3.4-.06-5.36-2.5-6.64 1.77-.4 3.1-1.57 3.47-3.97zM33 31.9c-.83 3.4-6.53 1.57-8.37 1.1l1.5-5.97c1.83.47 7.73 1.37 6.87 4.87zm.87-7.77c-.77 3.07-5.5 1.5-7.03 1.13l1.36-5.4c1.53.37 6.47 1.07 5.67 4.27z" fill="white"/>
+      </svg>
+    </div>
+    <div class="btc-ticker">BTC / USDT</div>
+    <div class="btc-price-big" id="loaderPrice">—</div>
+    <div class="btc-change"    id="loaderChange">&nbsp;</div>
+    <div class="loader-divider"></div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN PAGE ── -->
+<div id="page">
+  <div class="ring-container" aria-hidden="true">
+    <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="centerBg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#0e0e28"/>
+          <stop offset="60%"  stop-color="#080820"/>
+          <stop offset="100%" stop-color="#030310"/>
+        </radialGradient>
+        <radialGradient id="gold" cx="50%" cy="50%" r="50%">
+          <stop offset="63%"  stop-color="transparent"/>
+          <stop offset="70%"  stop-color="rgba(200,140,20,0.12)"/>
+          <stop offset="76%"  stop-color="rgba(255,200,60,0.55)"/>
+          <stop offset="80%"  stop-color="rgba(255,220,90,0.90)"/>
+          <stop offset="83%"  stop-color="rgba(255,205,70,0.70)"/>
+          <stop offset="88%"  stop-color="rgba(210,155,30,0.30)"/>
+          <stop offset="95%"  stop-color="rgba(160,110,10,0.08)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <radialGradient id="violet" cx="50%" cy="50%" r="50%">
+          <stop offset="60%"  stop-color="transparent"/>
+          <stop offset="66%"  stop-color="rgba(180,120,220,0.08)"/>
+          <stop offset="71%"  stop-color="rgba(200,150,235,0.40)"/>
+          <stop offset="74%"  stop-color="rgba(210,165,242,0.60)"/>
+          <stop offset="77%"  stop-color="rgba(195,145,230,0.38)"/>
+          <stop offset="83%"  stop-color="rgba(160,110,200,0.08)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <radialGradient id="blue" cx="50%" cy="50%" r="50%">
+          <stop offset="55%"  stop-color="transparent"/>
+          <stop offset="61%"  stop-color="rgba(170,195,255,0.10)"/>
+          <stop offset="65%"  stop-color="rgba(195,215,255,0.50)"/>
+          <stop offset="68%"  stop-color="rgba(215,230,255,0.82)"/>
+          <stop offset="71%"  stop-color="rgba(195,215,255,0.50)"/>
+          <stop offset="76%"  stop-color="rgba(155,180,245,0.15)"/>
+          <stop offset="84%"  stop-color="transparent"/>
+        </radialGradient>
+        <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+          <stop offset="60%"  stop-color="transparent"/>
+          <stop offset="75%"  stop-color="rgba(255,230,150,0.04)"/>
+          <stop offset="86%"  stop-color="rgba(200,180,255,0.07)"/>
+          <stop offset="96%"  stop-color="rgba(160,190,255,0.04)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="f6"  x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+        <filter id="f10" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="10"/></filter>
+        <filter id="f3"  x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
+        <filter id="f1"  x="-5%"  y="-5%"  width="110%" height="110%"><feGaussianBlur stdDeviation="1.5"/></filter>
+      </defs>
+      <circle cx="140" cy="140" r="140" fill="#000"/>
+      <circle cx="140" cy="140" r="140" fill="url(#halo)"   filter="url(#f10)"/>
+      <circle cx="140" cy="140" r="140" fill="url(#gold)"   filter="url(#f6)"/>
+      <circle cx="140" cy="140" r="140" fill="url(#gold)"   filter="url(#f1)" opacity="0.55"/>
+      <circle cx="140" cy="140" r="140" fill="url(#violet)" filter="url(#f3)"/>
+      <circle cx="140" cy="140" r="140" fill="url(#blue)"   filter="url(#f3)"/>
+      <circle cx="140" cy="140" r="140" fill="url(#blue)"   filter="url(#f1)" opacity="0.6"/>
+      <circle cx="140" cy="140" r="84"  fill="url(#centerBg)"/>
+      <text x="140" y="147"
+        text-anchor="middle" dominant-baseline="middle"
+        font-family="-apple-system,'Helvetica Neue',sans-serif"
+        font-size="30" font-weight="300" letter-spacing="1"
+        fill="rgba(255,255,255,0.88)">43/3321</text>
+    </svg>
+  </div>
+
+  <div class="info">
+    <p class="tagline">Hành trình khám phá<br>toàn bộ Việt Nam của Calc</p>
+    <p class="date-line" id="d"></p>
+    <p class="time-line" id="t"></p>
+    <div class="btn-wrap">
+      <button class="btn" onclick="this.textContent='✓ ĐĂNG KÝ'; this.style.borderColor='rgba(48,209,88,0.6)'; this.style.color='#30d158';">CALC</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Clock ──
+  const dEl = document.getElementById('d');
+  const tEl = document.getElementById('t');
+  const TZ  = 'Asia/Ho_Chi_Minh';
+  function tick() {
+    const now = new Date();
+    dEl.textContent = now.toLocaleDateString('vi-VN', { year:'numeric', month:'long', day:'numeric', timeZone: TZ });
+    tEl.textContent = now.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone: TZ });
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ── BTC price via Binance ──
+  const priceEl  = document.getElementById('loaderPrice');
+  const changeEl = document.getElementById('loaderChange');
+  let   lastDir  = '';
+  let   flashTimer = null;
+
+  async function fetchBTC() {
+    try {
+      const res  = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const price   = parseFloat(data.lastPrice);
+      const chgPct  = parseFloat(data.priceChangePercent);
+      const chgAbs  = parseFloat(data.priceChange);
+      const dir     = chgPct >= 0 ? 'up' : 'down';
+      const sign    = chgPct >= 0 ? '+' : '';
+
+      priceEl.textContent  = price.toLocaleString('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2 });
+      changeEl.textContent = sign + chgPct.toFixed(2) + '%  (' + sign + Math.abs(chgAbs).toLocaleString('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }) + ')';
+
+      // flash color only when direction changed
+      if (dir !== lastDir) {
+        priceEl.className  = 'btc-price-big ' + dir;
+        changeEl.className = 'btc-change ' + dir;
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(() => {
+          priceEl.className  = 'btc-price-big';
+          changeEl.className = 'btc-change ' + dir;
+        }, 700);
+        lastDir = dir;
+      } else {
+        changeEl.className = 'btc-change ' + dir;
+      }
+    } catch(err) {
+      // silent fail — keep last value
+    }
+  }
+  fetchBTC();
+  setInterval(fetchBTC, 4000);
+
+  // ── Loader progress ──
+  const fillEl  = document.getElementById('fill');
+  const loader  = document.getElementById('loader');
+  const page    = document.getElementById('page');
+  let   pct     = 0;
+  let   started = false;
+
+  // Start as soon as first BTC fetch returns OR after 600ms — whichever first
+  function startProgress() {
+    if (started) return;
+    started = true;
+
+    const steps = [
+      {target:25, ms:8},
+      {target:50, ms:9},
+      {target:72, ms:10},
+      {target:88, ms:9},
+      {target:100,ms:8},
+    ];
+    let si = 0;
+
+    function runStep() {
+      if (si >= steps.length) { finish(); return; }
+      const s = steps[si++];
+      const iv = setInterval(() => {
+        pct = Math.min(pct + 1, s.target);
+        fillEl.style.width = pct + '%';
+        if (pct >= s.target) { clearInterval(iv); setTimeout(runStep, 30); }
+      }, s.ms);
+    }
+    runStep();
+  }
+
+  function finish() {
+    setTimeout(() => {
+      loader.classList.add('hide');
+      document.body.style.overflow = 'auto';
+      page.classList.add('show');
+      setTimeout(() => { loader.remove(); }, 600);
+    }, 180);
+  }
+
+  // Kick off after first fetch resolves (patched via promise chain)
+  const origFetch = window.fetch;
+  let btcReady = false;
+  fetchBTC = (function(orig) {
+    return async function() {
+      await orig();
+      if (!btcReady) { btcReady = true; startProgress(); }
+    };
+  })(fetchBTC);
+
+  // Fallback: start anyway after 600ms if fetch is slow
+  setTimeout(startProgress, 600);
+  // Re-fetch immediately to trigger the above
+  fetchBTC();
+</script>
+</body>
+</html>
