@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MAS Bookshelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE SYSTEM ── */
+*, *::before, *::after { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
+}
+
+:root {
+  --bg-dark: #000000; /* Nền tối tuyệt đối */
+  --bg-card: rgba(20, 20, 25, 0.6);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --text-primary: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --blue-accent: #007aff; /* Điểm nhấn xanh dương công nghệ */
+  --blue-glow: rgba(0, 122, 255, 0.35);
+  --space-purple: #101432;
+  --lora-font: 'Lora', Georgia, serif;
+  --inter-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html, body { 
+  height: 100%; 
+  background-color: #000; 
+  font-family: var(--inter-font);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  margin: 0 auto;
+  background-color: var(--bg-dark);
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── AMBIENT GLOW ORBS ── */
+.glow-bg {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+.glow-1 {
+  background: var(--blue-accent);
+  top: -30px;
+  left: -50px;
+}
+.glow-2 {
+  background: #00f2fe;
+  bottom: 120px;
+  right: -50px;
+}
+.glow-3 {
+  background: #0d1117;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
+  opacity: 0.1;
+}
+
+/* ── SPA VIEWPORT SYSTEM ── */
+.page {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(35px);
+  -webkit-backdrop-filter: blur(35px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s, scale 0.4s, visibility 0.4s;
+  z-index: 10;
+  visibility: hidden;
+  opacity: 0;
+}
+.page::-webkit-scrollbar { display: none; }
+
+/* States */
+.page.p-active {
+  visibility: visible;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+.page.p-hidden {
+  transform: translate3d(100%, 0, 0);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+.page.p-pushed {
+  transform: translate3d(-10%, 0, 0) scale(0.96);
+  opacity: 0.45;
+  pointer-events: none;
+  visibility: visible;
+}
+
+.header-spacing { height: calc(16px + var(--safe-top)); min-height: 50px; flex-shrink: 0; }
+.bottom-spacing { height: calc(150px + var(--safe-bottom)); flex-shrink: 0; }
+
+/* ── HOME PAGE ── */
+.home-header { 
+  padding: 10px 20px 14px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+}
+.home-title {
+  font-family: var(--lora-font);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #ffffff 60%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.htools { display: flex; align-items: center; gap: 12px; }
+
+/* Progress Ring */
+.score-ring {
+  width: 44px; height: 44px;
+  border-radius: 50%; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.score-ring svg {
+  position: absolute; inset: 0;
+  transform: rotate(-90deg); width: 100%; height: 100%;
+}
+.score-ring .nums { display: flex; flex-direction: column; align-items: center; line-height: 1.1; z-index: 2; }
+.score-ring .big { font-size: 13px; font-weight: 700; color: #fff; }
+.score-ring .sm { font-size: 8px; font-weight: 600; color: var(--text-muted); }
+
+.avatar {
+  width: 42px; height: 42px; border-radius: 50%; background: rgba(255, 255, 255, 0.05);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.avatar svg { width: 24px; height: 24px; fill: #ffffff; opacity: 0.9; }
+
+/* Search Bar */
+.sbar-wrap { padding: 0 16px 14px; }
+.sbar {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px;
+  padding: 10px 14px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.02), 0 4px 12px rgba(0,0,0,0.5);
+}
+.sbar:focus-within {
+  border-color: rgba(0, 122, 255, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 0 16px rgba(0, 122, 255, 0.15);
+}
+.sbar svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-muted); }
+.sbar input {
+  flex: 1; min-width: 0; background: none; border: none; outline: none;
+  font-family: var(--inter-font); font-size: 15px; color: #fff;
+}
+.sbar input::placeholder { color: rgba(255, 255, 255, 0.3); }
+.sbar-x {
+  background: rgba(255, 255, 255, 0.12); border: none; color: #fff;
+  width: 18px; height: 18px; border-radius: 50%; font-size: 9px;
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+}
+
+.sec-title {
+  font-family: var(--lora-font); font-weight: 800; font-size: 24px;
+  letter-spacing: -0.3px; padding: 12px 20px 10px;
+}
+.sec-row { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px 10px; }
+.sec-row .sec-title { padding: 0; }
+.see-all { font-size: 14px; color: var(--blue-accent); font-weight: 600; cursor: pointer; }
+
+/* Category Cards */
+.cat-card {
+  margin: 0 16px 16px; height: 200px; border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.02), 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  overflow: hidden; position: relative; display: flex; align-items: center;
+  cursor: pointer; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, background 0.25s;
+}
+.cat-card:active { transform: scale(0.98); }
+.cat-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.cat-label {
+  font-family: var(--lora-font); font-weight: 800; font-size: 24px;
+  line-height: 1.25; letter-spacing: -0.4px; padding-left: 24px;
+  width: 160px; flex-shrink: 0; z-index: 5;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+.bk-stack { position: absolute; right: -15px; top: 50%; transform: translateY(-50%); display: flex; height: 180px; }
+.bk {
+  width: 106px; height: 180px; margin-left: -35px; border-radius: 4px 12px 12px 4px;
+  box-shadow: -8px 0 20px rgba(0,0,0,0.6); overflow: hidden; flex-shrink: 0;
+  display: flex; flex-direction: column; padding: 14px 12px; border-left: 3.5px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.bk-t { font-family: var(--lora-font); font-weight: 800; font-size: 14px; line-height: 1.2; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.bk-a { font-size: 10px; font-weight: 500; margin-top: 4px; opacity: 0.8; }
+
+/* Book Covers colors */
+.b1 { background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.4) 100%); color: #fff; border: 1px solid rgba(0, 122, 255, 0.25); }
+.b2 { background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%); color: #fff; border: 1px solid rgba(255, 255, 255, 0.12); }
+.b3 { background: linear-gradient(135deg, rgba(52, 152, 219, 0.2) 0%, rgba(41, 128, 185, 0.4) 100%); color: #fff; border: 1px solid rgba(52, 152, 219, 0.25); }
+.b4 { background: linear-gradient(135deg, rgba(44, 62, 80, 0.4) 0%, rgba(52, 73, 94, 0.4) 100%); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); }
+.b5 { background: linear-gradient(135deg, rgba(39, 39, 42, 0.3) 0%, rgba(9, 9, 11, 0.5) 100%); color: #f4f4f5; border: 1px solid rgba(255,255,255,0.08); }
+.b6 { background: linear-gradient(135deg, rgba(142, 68, 173, 0.2) 0%, rgba(155, 89, 182, 0.4) 100%); color: #fff; border: 1px solid rgba(142, 68, 173, 0.25); }
+
+/* Bestsellers */
+.scroll-row { display: flex; gap: 12px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+.scroll-row::-webkit-scrollbar { display: none; }
+.shelf-c {
+  flex-shrink: 0; width: 135px; height: 190px; border-radius: 14px;
+  overflow: hidden; cursor: pointer; box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 16px 14px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.shelf-c:active { transform: scale(0.96); }
+.shelf-c .sc-t { font-family: var(--lora-font); font-weight: 800; font-size: 18px; line-height: 1.2; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.shelf-c .sc-a { font-size: 11px; font-weight: 500; margin-top: 6px; opacity: 0.8; }
+
+.sc1 { background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(0, 122, 255, 0.4) 100%); color: #fff; border: 1px solid rgba(0, 122, 255, 0.25); }
+.sc2 { background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%); color: #fff; border: 1px solid rgba(255, 255, 255, 0.12); }
+.sc3 { background: linear-gradient(135deg, rgba(52, 152, 219, 0.2) 0%, rgba(41, 128, 185, 0.4) 100%); color: #fff; border: 1px solid rgba(52, 152, 219, 0.25); }
+.peek { width: 24px; flex-shrink: 0; opacity: 0.15; background: rgba(255, 255, 255, 0.05); border-radius: 12px; }
+
+/* Search Results */
+#home-results { display: none; background: transparent; min-height: 200px; }
+#home-results.on { display: block; }
+#home-main.off { display: none; }
+.res-count { font-size: 13px; color: var(--text-muted); padding: 8px 20px; }
+.res-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+  background: rgba(255,255,255,0.01);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.res-item:active { background: rgba(255,255,255,0.04); }
+.res-item .rname { font-size: 15px; font-weight: 500; line-height: 1.4; color: #fff; }
+.res-item .rchev { color: var(--text-muted); font-size: 18px; }
+
+/* Empty state */
+.empty-st { text-align: center; padding: 60px 20px; }
+.empty-st .ei { font-size: 40px; margin-bottom: 12px; }
+.empty-st .et { font-family: var(--lora-font); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.empty-st .es { font-size: 14px; color: var(--text-muted); }
+
+/* ── SPACES PAGE ── */
+.space-header {
+  padding: 20px 20px 10px;
+}
+.space-header h1 {
+  font-family: var(--inter-font);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+.space-header p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Audio Space Card */
+.space-card {
+  margin: 16px;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.3) 100%);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  border-radius: 22px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 12px 32px rgba(0, 122, 255, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.space-card:active { transform: scale(0.98); }
+
+.space-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.live-pulse {
+  width: 7px;
+  height: 7px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  animation: pulse-glow 1.4s infinite;
+}
+@keyframes pulse-glow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(255, 59, 48, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+.more-btn {
+  color: #fff;
+  opacity: 0.85;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.space-title {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+  margin-bottom: 22px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.listeners-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.listeners-avatars {
+  display: flex;
+  align-items: center;
+}
+.listeners-avatars .mini-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 122, 255, 0.4);
+  background: #fff;
+  margin-right: -8px;
+  object-fit: cover;
+}
+.listeners-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.9;
+}
+
+/* Host Info */
+.host-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 18px;
+  margin-bottom: 12px;
+}
+.host-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.host-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.host-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.verified-icon {
+  width: 15px;
+  height: 15px;
+  fill: var(--blue-accent);
+}
+.host-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.status-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+/* ── PERSISTENT GLOBAL AUDIO PLAYER ── */
+.audio-wave-container {
+  position: absolute;
+  bottom: calc(85px + var(--safe-bottom));
+  left: 16px;
+  right: 16px;
+  background: rgba(10, 10, 12, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+  z-index: 99;
+  transform: translateY(15px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.audio-wave-container.on {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.p-control-btn {
+  background: var(--blue-accent);
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.player-text-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.player-title-str {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-subtitle-str {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.wave-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 20px;
+}
+.wave-bar {
+  width: 3px;
+  height: 4px;
+  background-color: var(--blue-accent);
+  border-radius: 2px;
+}
+.wave-bars.active .wave-bar {
+  animation: wave-motion 1.2s ease-in-out infinite alternate;
+}
+.wave-bars.active .wave-bar:nth-child(2) { animation-delay: 0.15s; height: 18px; }
+.wave-bars.active .wave-bar:nth-child(3) { animation-delay: 0.3s; height: 10px; }
+.wave-bars.active .wave-bar:nth-child(4) { animation-delay: 0.45s; height: 16px; }
+.wave-bars.active .wave-bar:nth-child(5) { animation-delay: 0.6s; height: 12px; }
+
+@keyframes wave-motion {
+  0% { height: 4px; }
+  100% { height: 20px; }
+}
+
+/* ── ALBUM PAGE ── */
+.alb-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 15px; font-weight: 600; color: var(--blue-accent);
+  padding: 16px 20px 8px; cursor: pointer; user-select: none;
+}
+.alb-back svg { width: 8px; height: 14px; }
+.alb-hero { padding: 12px 20px 16px; }
+.alb-hero h1 {
+  font-family: var(--lora-font); font-weight: 800; font-size: 32px;
+  letter-spacing: -0.5px; line-height: 1.2;
+}
+.alb-hero .alb-sub { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+
+/* Grid book categories */
+.books-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 4px 16px 16px; }
+.bcard {
+  border-radius: 16px; cursor: pointer; min-height: 150px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 16px 14px; 
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.02), 0 4px 16px rgba(0,0,0,0.3);
+  position: relative; transition: transform 0.18s, border-color 0.18s, background-color 0.18s;
+}
+.bcard:active { transform: scale(0.96); }
+.bcard:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.bcard-num { font-size: 11px; font-weight: 700; opacity: 0.25; letter-spacing: 0.5px; }
+.bcard-title {
+  font-family: var(--lora-font); font-weight: 700; font-size: 15px;
+  line-height: 1.35; color: #fff; margin: 10px 0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bcard-badge {
+  align-self: flex-start; background: rgba(0, 122, 255, 0.1);
+  color: var(--blue-accent); font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 8px; border: 0.5px solid rgba(0, 122, 255, 0.25);
+}
+.bcard-badge.empty {
+  background: rgba(255, 255, 255, 0.04); color: var(--text-muted);
+  border-color: transparent;
+}
+
+/* ── BOOK READER ── */
+.reader-controls-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+}
+.reader-title-short {
+  font-family: var(--lora-font);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.font-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.font-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.font-btn:active { background: rgba(255, 255, 255, 0.1); }
+
+/* Custom Chapter Selection styling */
+.chapter-nav-bar {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.chapter-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+.chapter-select-wrapper::after {
+  content: '▼';
+  font-size: 9px;
+  color: var(--text-muted);
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  pointer-events: none;
+}
+.chapter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 10px 32px 10px 14px;
+  border-radius: 12px;
+  font-family: var(--inter-font);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.chapter-select:focus {
+  border-color: var(--blue-accent);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 12px var(--blue-glow);
+}
+
+/* Reader Body */
+.reader-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+  font-family: var(--lora-font);
+  line-height: 1.8;
+  color: #e4e4e7;
+  font-size: 16px; 
+  background: rgba(0, 0, 0, 0.5);
+}
+.reader-body h4 {
+  font-family: var(--inter-font);
+  color: #fff;
+  font-size: 1.15em;
+  font-weight: 800;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+.reader-body p {
+  margin-bottom: 16px;
+  text-align: justify;
+}
+
+/* ── GLOBAL TAB BAR ── */
+.tabbar-outer {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 10px 16px calc(10px + var(--safe-bottom));
+  z-index: 90;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.tabbar {
+  flex: 1; display: flex; justify-content: space-around; align-items: center;
+  height: 60px; border-radius: 30px; position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 12px 36px rgba(0,0,0,0.8);
+  pointer-events: all;
+}
+.tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.4);
+  cursor: pointer; padding: 8px 12px; position: relative;
+}
+.tab.on { color: var(--blue-accent); }
+.tab.on::after {
+  content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 3px; border-radius: 0 0 3px 3px;
+  background: var(--blue-accent); box-shadow: 0 0 8px var(--blue-accent);
+}
+.tab svg { width: 22px; height: 22px; }
+
+.fab {
+  width: 60px; height: 60px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.8), rgba(0, 80, 200, 0.9));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; pointer-events: all; 
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 10px 24px rgba(0,122,255,0.3);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s;
+}
+.fab:active { transform: scale(0.92); }
+.fab svg { width: 22px; height: 22px; stroke: #ffffff; }
+
+/* TOAST NOTIFICATION */
+.toast {
+  position: absolute; bottom: calc(145px + var(--safe-bottom)); left: 0; right: 0;
+  display: flex; justify-content: center; z-index: 500; pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s; opacity: 0; transform: translateY(8px);
+}
+.toast-inner {
+  background: rgba(15, 15, 20, 0.9); color: #fff; font-size: 13px; font-weight: 500;
+  padding: 10px 18px; border-radius: 14px; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  max-width: 85%; text-align: center;
+}
+.toast.on { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Audio Player -->
+<audio id="real-audio-player" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+
+<div id="app">
+
+  <!-- Glow background -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+  <div class="glow-bg glow-3"></div>
+
+  <!-- ════════════════ PAGE: HOME ════════════════ -->
+  <div class="page p-active" id="pg-home">
+    <div class="header-spacing"></div>
+
+    <div class="home-header">
+      <div class="home-title">Trang chủ</div>
+      <div class="htools">
+        <div class="score-ring">
+          <svg viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="18.5" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3.5"/>
+            <circle cx="21" cy="21" r="18.5" fill="none" stroke="#007aff" stroke-width="3.5"
+              stroke-dasharray="116.24" stroke-dashoffset="112" stroke-linecap="round"/>
+          </svg>
+          <div class="nums">
+            <span class="big">1</span>
+            <span class="sm">29</span>
+          </div>
+        </div>
+        <div class="avatar">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="sbar-wrap">
+      <div class="sbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16" y2="16"/>
+        </svg>
+        <input type="text" id="home-q" placeholder="Tìm kiếm sách..." autocomplete="off" inputmode="search">
+        <button class="sbar-x" id="home-x">✕</button>
+      </div>
+    </div>
+
+    <div id="home-results"></div>
+
+    <div id="home-main">
+      <div class="sec-title">Khám Phá Thêm</div>
+
+      <!-- Twitter Asylum Area -->
+      <div class="cat-card" onclick="openAlbum()">
+        <div class="cat-label">Trại Tâm<br>Thần Twitter</div>
+        <div class="bk-stack">
+          <div class="bk b1"><span class="bk-t">Sống Mạo Hiểm</span><span class="bk-a">Maye Musk</span></div>
+          <div class="bk b2"><span class="bk-t">The Book of Elon</span></div>
+          <div class="bk b3"><span class="bk-t">Steve Jobs</span></div>
+        </div>
+      </div>
+
+      <!-- Nonfiction -->
+      <div class="cat-card" onclick="showToast('Mục Phi hư cấu hiện không khả dụng.')">
+        <div class="cat-label">Phi hư<br>cấu</div>
+        <div class="bk-stack">
+          <div class="bk b4"><span class="bk-t">The Art of War</span><span class="bk-a">Sun Tzu</span></div>
+          <div class="bk b5"><span class="bk-t">Mastering Bitcoin</span></div>
+          <div class="bk b6"><span class="bk-t">Basic Economic</span></div>
+        </div>
+      </div>
+
+      <div class="sec-row">
+        <div class="sec-title">Bán Chạy Nhất</div>
+        <div class="see-all" onclick="openAlbum()">Xem tất cả ›</div>
+      </div>
+
+      <div class="scroll-row">
+        <div class="shelf-c sc1" onclick="openAlbum()">
+          <div class="sc-t">Sống Mạo Hiểm</div>
+          <div class="sc-a">Maye Musk</div>
+        </div>
+        <div class="shelf-c sc2" onclick="openAlbum()">
+          <div class="sc-t">The Book of Elon</div>
+        </div>
+        <div class="shelf-c sc3" onclick="openAlbum()">
+          <div class="sc-t">Steve Jobs</div>
+        </div>
+        <div class="peek"></div>
+      </div>
+    </div>
+
+    <div class="bottom-spacing"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: SPACES ════════════════ -->
+  <div class="page" id="pg-spaces">
+    <div class="header-spacing"></div>
+    
+    <div class="space-header">
+      <h1>Happening Now</h1>
+      <p>Spaces going on right now</p>
+    </div>
+
+    <!-- Space card component -->
+    <div class="space-card" onclick="togglePlaySpace()">
+      <div class="space-card-top">
+        <div class="live-badge">
+          <span class="live-pulse"></span>
+          TRỰC TIẾP
+        </div>
+        <div class="more-btn">•••</div>
+      </div>
+
+      <div class="space-title">Giới Thiệu MAS</div>
+
+      <div class="listeners-row">
+        <div class="listeners-avatars">
+          <img class="mini-av" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="av">
+          <img class="mini-av" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="av">
+          <img class="mini-av" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="av">
+        </div>
+        <div class="listeners-count">1.2K nghe</div>
+      </div>
+
+      <div class="host-section">
+        <img class="host-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" alt="host">
+        <div class="host-name-wrap">
+          <span class="host-name">Admin</span>
+          <svg class="verified-icon" viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+          </svg>
+        </div>
+        <span class="host-badge">Chủ phòng</span>
+      </div>
+
+      <div class="status-text">
+        BSC Mathematics 🇳🇬 🎓 ~ Nurse 🇺🇸 🎓 <br>
+        <span style="color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500; margin-top: 5px; display: inline-block;">Đang phát hành</span>
+      </div>
+    </div>
+
+    <div class="bottom-spacing"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: ALBUM ════════════════ -->
+  <div class="page p-hidden" id="pg-album">
+    <div class="header-spacing"></div>
+
+    <div class="alb-back" onclick="closeAlbum()">
+      <svg viewBox="0 0 9 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="8,1 1,8 8,15"/>
+      </svg>
+      Trang chủ
+    </div>
+
+    <div class="alb-hero">
+      <h1>Trại Tâm Thần Twitter</h1>
+      <div class="alb-sub" id="alb-sub">29 cuốn sách</div>
+    </div>
+
+    <div class="sbar-wrap">
+      <div class="sbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16" y2="16"/>
+        </svg>
+        <input type="text" id="alb-q" placeholder="Tìm trong danh mục..." autocomplete="off" inputmode="search">
+        <button class="sbar-x" id="alb-x">✕</button>
+      </div>
+    </div>
+
+    <div id="alb-content"></div>
+    <div class="bottom-spacing"></div>
+  </div>
+
+  <!-- ════════════════ PAGE: BOOK READER ════════════════ -->
+  <div class="page p-hidden" id="pg-book">
+    <div class="header-spacing"></div>
+
+    <div class="reader-controls-top">
+      <div class="alb-back" onclick="closeBook()" style="padding: 0;">
+        <svg viewBox="0 0 9 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="8,1 1,8 8,15"/>
+        </svg>
+        Thoát
+      </div>
+      <div class="reader-title-short" id="reader-book-title">The Placebo</div>
+      <div class="font-controls">
+        <button class="font-btn" onclick="adjustFontSize(-1)">A-</button>
+        <button class="font-btn" onclick="adjustFontSize(1)">A+</button>
+      </div>
+    </div>
+
+    <div class="chapter-nav-bar">
+      <div class="chapter-select-wrapper">
+        <select class="chapter-select" id="chapter-selector" onchange="loadChapter(this.value)">
+          <!-- Loaded dynamically -->
+        </select>
+      </div>
+    </div>
+
+    <div class="reader-body" id="reader-main-content">
+      <!-- Book content gets rendered here -->
+    </div>
+
+    <div class="bottom-spacing"></div>
+  </div>
+
+  <!-- ── PERSISTENT GLOBAL AUDIO PLAYER ── -->
+  <div class="audio-wave-container" id="global-audio-player">
+    <div class="player-info" onclick="switchTab('spaces')">
+      <button class="p-control-btn" id="player-play-btn" onclick="event.stopPropagation(); togglePlaySpace();">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" id="play-icon-svg">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+      <div class="player-text-meta">
+        <span class="player-title-str">Giới Thiệu MAS</span>
+        <span class="player-subtitle-str" id="player-status-str">Đang tạm dừng phát</span>
+      </div>
+    </div>
+    <div class="wave-bars" id="audio-visualizer-wave">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+  </div>
+
+  <!-- ── GLOBAL TAB BAR ── -->
+  <div class="tabbar-outer">
+    <div class="tabbar">
+      <div class="tab on" id="tab-home" onclick="switchTab('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+          <path d="M9 21V12h6v9"/>
+        </svg>
+        Trang chủ
+      </div>
+      <div class="tab" id="tab-spaces" onclick="switchTab('spaces')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+        Spaces
+      </div>
+      <div class="tab" onclick="showToast('Sách nói đang được phát triển.')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a9 9 0 0118 0v6"/>
+          <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
+        </svg>
+        Audio
+      </div>
+    </div>
+    <div class="fab" onclick="focusHomeSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16" y2="16"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"><div class="toast-inner" id="toast-msg">Thông báo</div></div>
+
+</div>
+
+<script>
+// ─── DỮ LIỆU SÁCH ───
+const BOOKS = [
+  { t:"Trend following", hasContent: false },
+  { t:"Leonardo Da Vinci", hasContent: false },
+  { t:"How to be a super connecter", hasContent: false },
+  { t:"Operation Management", hasContent: false },
+  { t:"Ignition", hasContent: false },
+  { t:"Design of liquid propellant Rocket Engineer", hasContent: false },
+  { t:"Chip war", hasContent: false },
+  { t:"Epstein file", hasContent: false },
+  { t:"How to trade in stock", hasContent: false },
+  { t:"Sống mạo hiểm một cách cẩn thận", hasContent: false },
+  { t:"CMOS VLSI", hasContent: false },
+  { t:"The placebo", hasContent: true },
+  { t:"The Book of Elon", hasContent: false },
+  { t:"The handbook of cosmetic", hasContent: false },
+  { t:"Manufacturing planning and Control For Supply Chain management", hasContent: false },
+  { t:"Production and Operations Management", hasContent: false },
+  { t:"Rocket Propulsion Elements", hasContent: false },
+  { t:"Basic economic", hasContent: false },
+  { t:"Failure is not a option", hasContent: false },
+  { t:"Digital Integrated circuit design", hasContent: false },
+  { t:"Becoming Supernatural", hasContent: false },
+  { t:"Hồ Chí Minh Tiểu Sử", hasContent: false },
+  { t:"Modern VLSI Design", hasContent: false },
+  { t:"Lê Đức Thọ Tiểu Sử", hasContent: false },
+  { t:"The new trading for a living", hasContent: false },
+  { t:"Mastering Bitcoin", hasContent: false },
+  { t:"Tinh Thần Samurai", hasContent: false },
+  { t:"Steve Jobs", hasContent: false },
+  { t:"The Death and Life of Great American Cities", hasContent: false }
+];
+
+// ─── NỘI DUNG TOÀN BỘ CÁC CHƯƠNG ───
+const PLACEBO_DATA = {
+  "1": {
+    chName: "Chương 1: Liệu điều đó có khả thi không?",
+    content: `
+      <h4>1. Sức mạnh của niềm tin: Sự sống và cái chết</h4>
+      <p>Tác giả mở đầu bằng những câu câu chuyện thực tế đầy ám ảnh về việc suy nghĩ và kỳ vọng có thể trực tiếp quyết định tình trạng thể chất của một con người. Một ví dụ điển hình là trường hợp một người đàn ông qua đời vì tin rằng mình bị ung thư giai đoạn cuối, nhưng kết quả khám nghiệm tử thi cho thấy các khối u chưa bao giờ đủ lớn để gây tử vong. Điều này đặt ra một câu hỏi chấn động: Liệu chúng ta chết vì căn bệnh, hay chết vì "ý nghĩ" rằng mình đang mắc bệnh?</p>
+      <p>Ngược lại, Joe Dispenza cũng dẫn chứng về những trường hợp "nocebo" (ngược lại với placebo - giả dược). Một người có thể gặp các triệu chứng ngộ độc cấp tính chỉ vì họ tin rằng mình đã uống nhầm một lượng lớn thuốc độc, dù thực tế đó chỉ là những viên đường vô hại.</p>
+      
+      <h4>2. Giả dược trong y khoa hiện đại: Thuốc và Phẫu thuật</h4>
+      <p>Chương này đi sâu vào các thử nghiệm lâm sàng, nơi "giả dược" đôi khi còn mang lại hiệu quả cao hơn cả thuốc thật hoặc các thủ thuật y tế phức tạp.</p>
+      <p><strong>Trầm cảm:</strong> Tác giả kể về những bệnh nhân thoát khỏi căn bệnh trầm cảm kéo dài hàng thập kỷ chỉ nhờ uống viên đường, và kinh ngạc hơn là các bản quét não của họ cho thấy sự thay đổi thực sự về cấu trúc và hóa học thần kinh, giống hệt như khi dùng thuốc điều trị.</p>
+      <p><strong>Phẫu thuật giả (Sham Surgery):</strong> Một phần rất quan trọng của chương đề cập đến các nghiên cứu về phẫu thuật đầu gối và phẫu thuật tim. Những bệnh nhân chỉ được rạch da rồi khâu lại (không hề can thiệp bên trong) lại có tốc độ hồi phục và giảm đau tương đương, thậm chí tốt hơn những người được phẫu thuật thực sự. Điều này minh chứng rằng khi bệnh nhân tin mình đã được chữa trị, cơ thể họ tự kích hoạt "hiệu thuốc nội sinh" để chữa lành.</p>
+
+      <h4>3. Những hiện tượng "Siêu nhiên" và Tâm linh</h4>
+      <p>Để đẩy giới hạn của tính khả thi đi xa hơn, chương 1 đề cập đến những hiện tượng nằm ngoài logic y học thông thường:</p>
+      <p><strong>Lời nguyền Voodoo:</strong> Làm thế nào một lời ám thị của thầy phù thủy có thể khiến một người khỏe mạnh suy sụp và chết trong thời gian ngắn?</p>
+      <p><strong>Nghi lễ tôn giáo:</strong> Những người tham gia các nghi lễ cực đoan như cầm rắn độc hay uống chất độc mà không hề hấn gì. Tác giả lý giải rằng khi một người đạt đến trạng thái tin tưởng tuyệt đối, trạng thái sinh học của họ thay đổi đến mức trở nên "miễn nhiễm" với các tác động có hại từ môi trường.</p>
+
+      <h4>4. Mối liên hệ giữa Thái độ và Tuổi thọ</h4>
+      <p>Tác giả dẫn chứng các nghiên cứu từ Đại học Yale và Mayo Clinic về sự khác biệt giữa người lạc quan và người bi quan. Những người có thái độ tích cực về việc già đi không chỉ sống lâu hơn mà còn ít mắc bệnh tim mạch hơn. Ý nghĩ không chỉ tác động đến sự chữa lành tức thời mà còn khắc ghi vào mã gen và quá trình lão hóa của chúng ta.</p>
+
+      <h4>5. Kết luận của chương: Bạn chính là giả dược</h4>
+      <p>Thông điệp cốt lõi mà chương 1 muốn truyền tải là: Cơ thể chúng ta sở hữu một trí thông minh bẩm sinh và một hệ thống dược lý tự thân vô cùng mạnh mẽ. Placebo không phải là một "phép màu" ngẫu nhiên, mà là kết quả của việc tâm trí chấp nhận một ý niệm mới về sức khỏe và ra lệnh cho cơ thể biến ý niệm đó thành hiện thực.</p>
+      <p>Tác giả đặt ra nền tảng rằng: Nếu một người có thể bị bệnh hoặc chết chỉ vì một suy nghĩ sai lầm, thì chắc chắn họ cũng có thể trở nên khỏe mạnh và hạnh phúc bằng cách thay đổi suy nghĩ của mình.</p>
+    `
+  },
+  "2": {
+    chName: "Chương 2: Lược sử về Giả dược",
+    content: `
+      <h4>1. Henry Beecher và Bước ngoặt trên chiến trường Thế chiến II</h4>
+      <p>Tác giả mở đầu bằng câu chuyện về bác sĩ quân y Henry Beecher. Khi hết sạch thuốc giảm đau (morphine) để phẫu thuật cho các binh lính bị thương nặng, một y tá đã nảy ra sáng kiến: tiêm nước muối sinh lý nhưng lại bảo binh lính đó là morphine cực mạnh.</p>
+      <p><strong>Kết quả kinh ngạc:</strong> Những người lính không chỉ giảm đau mà còn không bị sốc tim, dù họ chỉ được tiêm nước lã.</p>
+      <p><strong>Tác động lịch sử:</strong> Sau chiến tranh, Beecher trở về Mỹ và công bố bài báo chấn động năm 1955: "Giả dược quyền năng". Ông là người tiên phong yêu cầu các cuộc thử nghiệm lâm sàng phải có nhóm đối chứng dùng giả dược để loại bỏ "năng lực của ý nghĩ" ra khỏi kết quả kiểm nghiệm thuốc.</p>
+
+      <h4>2. Từ Phép màu tôn giáo đến Thuật thôi miên</h4>
+      <p>Joe Dispenza nhắc lại rằng trước khi có giả dược hiện đại, nhân loại đã chứng kiến vô số sự chữa lành thông qua niềm tin:</p>
+      <p><strong>Chữa lành bằng đức tin:</strong> Những câu chuyện tại Lộ Đức (Pháp) hay Fatima, nơi hàng triệu người tìm đến và thực sự có những người đã bỏ lại nạng gỗ vì tin vào quyền năng của Chúa hay các vị thánh.</p>
+      <p><strong>Franz Anton Mesmer và "Từ tính động vật":</strong> Mesmer tin rằng ông có thể điều khiển một loại chất lỏng vô hình trong cơ thể bằng nam châm hoặc bàn tay để chữa bệnh. Thực tế, ông đã vô tình phát hiện ra trạng thái "gợi ý" cực cao của con người.</p>
+      <p><strong>James Braid và Thôi miên:</strong> Braid đã chuyển hóa những ý tưởng của Mesmer thành "thần kinh thôi miên". Ông phát hiện ra rằng khi một người tập trung cực độ vào một ý niệm (như ngọn lửa của chiếc đèn dầu), nano bộ của họ trở nên cực kỳ dễ tiếp nhận các chỉ thị chữa lành.</p>
+
+      <h4>3. Sự xuất hiện của "Nocebo" – Mặt tối của niềm tin</h4>
+      <p>Chương này giới thiệu khái niệm Nocebo (Latinh có nghĩa là "Tôi sẽ gây hại"). Đây là hiện tượng ngược lại với Placebo:</p>
+      <p><strong>Thử nghiệm lá độc tại Nhật Bản:</strong> Các nhà nghiên cứu dùng lá vô hại chà lên tay trẻ em nhưng bảo đó là lá sơn độc (poison ivy). Kết quả: tất cả trẻ em đều bị nổi mẩn đỏ. Ngược lại, khi dùng lá sơn độc thật nhưng bảo là lá lành, phần lớn trẻ em không hề bị dị ứng.</p>
+      <p><strong>Bài học:</strong> Niềm tin và kỳ vọng vào cái xấu có thể tạo ra độc tố và bệnh tật trong cơ thể nhanh như cách nó chữa lành.</p>
+
+      <h4>4. Những đột phá sinh học: Khi khoa học xác nhận Placebo là thật</h4>
+      <p>Đến những năm 1970, Placebo không còn là "sự tưởng tượng" thuần túy nhờ hai nghiên cứu quan trọng:</p>
+      <p><strong>Cơ chế Endorphin (Jon Levine):</strong> Nghiên cứu cho thấy khi bệnh nhân uống giả dược và tin rằng nó là thuốc giảm đau, não họ thực sự tiết ra Endorphin (thuốc giảm đau tự nhiên của cơ thể). Khi các bác sĩ bí mật tiêm chất chặn endorphin, cơn đau lập tức quay lại. Điều này chứng minh: Giả dược không lừa dối tâm trí, nó kích hoạt hệ thống dược lý bên trong cơ thể.</p>
+      <p><strong>Điều kiện hóa (Robert Ader):</strong> Thông qua thí nghiệm với chuột và nước đường trộn thuốc ức chế miễn dịch, Ader chứng minh rằng sau một thời gian, chỉ cần cho chuột uống nước đường (dù không có thuốc), hệ miễn dịch của chúng vẫn tự động suy giảm. Điều này cho thấy hệ thần kinh và hệ miễn dịch có liên kết chặt chẽ.</p>
+
+      <h4>5. Giả dược đánh bại thuốc chống trầm cảm</h4>
+      <p>Joe dẫn chứng nghiên cứu của Irving Kirsch, người đã sử dụng Đạo luật Tự do Thông tin để truy cập vào các dữ liệu chưa công bố của các hãng dược phẩm lớn.</p>
+      <p><strong>Sự thật chấn động:</strong> Giả dược có hiệu quả tương đương các loại thuốc nổi tiếng như Prozac, Effexor, Paxil tới 81% trường hợp. Cơ thể con người hoàn toàn có khả năng tự tạo ra các hóa chất cân bằng tâm trạng mà không cần đến ngoại lực.</p>
+    `
+  },
+  "3": {
+    chName: "Chương 3: Hiệu ứng giả dược trong não bộ",
+    content: `
+      <h4>1. Ba trụ cột tạo nên Hiệu ứng Giả dược</h4>
+      <p>Tác giả khẳng định để ý nghĩ tác động được vào thân thể, cần có sự kết hợp của 3 yếu tố:</p>
+      <p><strong>Sự điều kiện hóa (Conditioning):</strong> Đây là bộ nhớ liên tưởng. Ví dụ: Bạn đau đầu -> uống aspirin -> hết đau. Sau nhiều lần, não bộ tạo ra một lối mòn thần kinh. Khi bạn chỉ uống một viên đường (giả dược) có hình dáng giống aspirin, não tự động kích hoạt quá trình chữa lành dựa trên kinh nghiệm quá khứ.</p>
+      <p><strong>Sự kỳ vọng (Expectation):</strong> Khi một bác sĩ uy tín nói "Thuốc này sẽ giúp bạn", bạn bắt đầu hướng về tương lai với niềm tin. Sự kỳ vọng này kích hoạt các vùng não liên quan đến phần thưởng và sự thuyên giảm, khiến não tự sản xuất hóa chất tương ứng với thuốc thật.</p>
+      <p><strong>Ý nghĩa (Meaning):</strong> Khi chúng ta gán ý nghĩa cho một hành động, hiệu quả sẽ tăng lên. Tác giả nhắc lại ví dụ về những người hầu phòng: Khi họ hiểu rằng dọn dẹp là "tập thể dục" (có ý nghĩa), cơ thể họ bắt đầu giảm cân. Nếu không có ý nghĩa, hành động đó chỉ là lao động mệt mỏi.</p>
+
+      <h4>2. Vòng lặp Suy nghĩ - Cảm xúc (The Thinking-Feeling Loop)</h4>
+      <p>Suy nghĩ là ngôn ngữ của não bộ; Cảm xúc là ngôn ngữ của cơ thể. Mỗi ngày chúng ta có khoảng 60.000 - 70.000 ý nghĩ, và 90% trong số đó giống hệt ngày hôm qua. Khi bạn nghĩ một ý nghĩ, não tiết ra hóa chất làm bạn cảm thấy một cảm xúc. Khi cảm thấy cảm xúc đó, bạn lại nghĩ thêm những ý nghĩ tương tự. Cứ thế, bạn tạo ra một "Trạng thái tồn tại" (State of Being).</p>
+      <p><strong>Hậu quả:</strong> Nếu bạn luôn nghĩ về quá khứ đau khổ, cơ thể bạn sẽ "sống" trong quá khứ đó về mặt hóa học mỗi ngày, khiến bệnh tật không thể rời đi.</p>
+
+      <h4>3. Quy luật Hebb: "Các tế bào thần kinh cùng phát hỏa thì cùng kết nối"</h4>
+      <p>Joe Dispenza giải thích về tính dẻo của não bộ: Nếu bạn lặp đi lặp lại cùng một suy nghĩ và hành động, não bộ của họ sẽ hình thành những "lối mòn" cứng nhắc. Tác giả gọi đây là "Tư duy trong chiếc hộp" (Thinking in the box).</p>
+      <p>Đến năm 35 tuổi, 95% con người chúng ta là một tập hợp các chương trình tự động: thói quen, phản ứng cảm xúc, niềm tin cố hữu. Lúc này, cơ thể đã trở thành "tâm trí", nó vận hành mà không cần ý thức.</p>
+    `
+  },
+  "4": {
+    chName: "Chương 4: Hiệu ứng giả dược trong cơ thể",
+    content: `
+      <h4>1. Tâm trí trẻ lại, cơ thể trẻ theo</h4>
+      <p>Chương này dẫn chứng một nghiên cứu kinh điển về những người đàn ông cao tuổi tham gia vào một khóa rút lui, nơi họ sống và hành động như thể họ đang ở thời điểm 22 năm trước. Kết quả là các chỉ số sinh học của họ—từ thị lực, thính lực đến sức mạnh cơ bắp—đều thay đổi theo hướng trẻ hóa một cách đáng kinh ngạc, minh chứng rằng khi tâm trí thay đổi dòng thời gian, cơ thể sẽ phản ứng theo.</p>
+      
+      <h4>2. Phá vỡ định kiến về gen</h4>
+      <p>Tác giả thách thức quan niệm truyền thống rằng gen là định mệnh không thể thay đổi. Ông giải thích rằng phần lớn các gen không cố định mà luôn biến động dựa trên tín hiệu từ môi trường.</p>
+      
+      <h4>3. Khoa học Biểu hiện gen (Epigenetics)</h4>
+      <p>Đây là trọng tâm của chương. Joe Dispenza giải thích cơ chế "biểu hiện gen", nơi các ý nghĩ và cảm xúc đóng vai trò là tín hiệu hóa học chỉ đạo DNA bật hoặc tắt các gen cụ thể. Thông qua quá trình này, chúng ta có thể "nâng cấp" các phản ứng sinh học của cơ thể hoặc "hạ cấp" các gen gây bệnh.</p>
+    `
+  },
+  "5": {
+    chName: "Chương 5: Suy nghĩ thay đổi bộ não và cơ thể như thế nào",
+    content: `
+      <h4>1. Có thể ra lệnh cho gen "trước" khi môi trường thay đổi?</h4>
+      <p>Thông thường, chúng ta chờ đợi một sự kiện bên ngoài xảy ra (trúng số, khỏi bệnh) để cảm thấy hạnh phúc. Nhưng Joe Dispenza lật ngược vấn đề: Bạn có thể kết hợp một ý định rõ ràng (Intention) với một cảm xúc thăng hoa (Elevated Emotion) để định hướng cơ thể rằng sự kiện đó đang diễn ra ngay lúc này không?</p>
+      <p>Nếu làm được, bạn sẽ kích hoạt gen mới để chuẩn bị cho tương lai đó trước cả khi nó thực sự đến. Bạn không còn chờ đợi sự chữa lành; bạn đang là sự chữa lành.</p>
+      
+      <h4>2. Luyện tập trong tâm trí: Sức mạnh của trí tưởng tượng</h4>
+      <p><strong>Thí nghiệm chơi Piano (Harvard):</strong> Một nhóm tập đàn thật, một nhóm chỉ "tưởng tượng" mình đang tập. Sau 5 ngày, bản đồ não của cả hai nhóm thay đổi y hệt nhau. Nhóm tưởng tượng đã cài đặt "phần cứng" thần kinh chỉ bằng ý nghĩ.</p>
+      <p><strong>Thí nghiệm cơ bắp:</strong> Những người chỉ ngồi yên và tưởng tượng mình đang gồng bắp tay đã tăng sức mạnh cơ bắp thực tế từ 13.5% đến 35%.</p>
+    `
+  },
+  "6": {
+    chName: "Chương 6: Khả năng ám thị",
+    content: `
+      <h4>1. Thí nghiệm "Sát thủ thôi miên": Ranh giới của sự ám thị</h4>
+      <p>Tác giả mở đầu bằng một câu chuyện gây sốc về Ivan Santiago – một người đàn ông hiền lành, đạo đức nhưng đã bị thôi miên để thực hiện một hành vi nguy hiểm: ám sát một người lạ bằng súng giả (dù anh ta tin là súng thật).</p>
+      <p><strong>Mục đích:</strong> Chứng minh rằng khi một người đạt đến trạng thái ám thị cực cao, họ có thể vượt qua mọi rào cản về lý trí, đạo đức để thực hiện mệnh lệnh của người thôi miên.</p>
+
+      <h4>2. Ý thức và Tiềm thức: Mô hình 5% và 95%</h4>
+      <p>Ý thức chỉ chiếm khoảng 5% tâm trí, trong khi 95% còn lại là tiềm thức. Tiềm thức là nơi lưu trữ các chương trình tự động: thói quen, phản ứng cảm xúc, niềm tin sâu thẳm và các hoạt động sinh học.</p>
+      <p>Ý thức đóng vai trò như "người gác cổng". Nếu bạn bị bệnh và nói "Tôi khỏe mạnh", người gác cổng này sẽ bác bỏ ngay vì nó không khớp với thực tế.</p>
+    `
+  },
+  "7": {
+    chName: "Chương 7: Thái độ, Niềm tin và Nhận thức",
+    content: `
+      <h4>1. Phân cấp của sự lập trình tâm trí</h4>
+      <p><strong>Thái độ (Attitude):</strong> Là một chu kỳ ngắn hạn của những suy nghĩ và cảm xúc lặp lại. Nếu vui vẻ trong vài giờ, bạn có một thái độ tốt.</p>
+      <p><strong>Niềm tin (Belief):</strong> Khi duy trì thái độ đủ lâu (vài tuần hoặc tháng), nó trở thành niềm tin. Chúng ta thường "nghiện" niềm tin của mình.</p>
+      <p><strong>Nhận thức (Perception):</strong> Cấp độ cao nhất, hình thành từ chuỗi niềm tin. Nhận thức như chiếc kính lọc, khiến bạn mặc định thực tại là như vậy.</p>
+    `
+  },
+  "8": {
+    chName: "Chương 8: Tâm trí lượng tử",
+    content: `
+      <h4>1. Từ Thế giới Newton đến Thế giới Lượng tử</h4>
+      <p><strong>Vật lý Newton:</strong> Coi vũ trụ như cỗ máy khổng lồ, có thể đo lường và dự đoán. Tâm trí và vật chất tách rời.</p>
+      <p><strong>Vật lý Lượng tử:</strong> Thế giới hạ nguyên tử, nơi mọi quy luật thông thường bị phá vỡ. Vật chất thực tế là 99.999% không gian trống rỗng chứa đầy năng lượng và thông tin.</p>
+      
+      <h4>2. Hiệu ứng Người quan sát (The Observer Effect)</h4>
+      <p>Hạt chỉ xuất hiện tại vị trí cụ thể khi có sự quan sát của con người. Trước đó, nó là sóng khả năng. Nếu ý nghĩ của con người ảnh hưởng đến electron, thì sự tập trung của bạn cũng định hình được thực tại sinh học của chính bạn.</p>
+    `
+  },
+  "9": {
+    chName: "Chương 9: Ba câu chuyện về sự chuyển hóa cá nhân",
+    content: `
+      <h4>1. Vượt qua định mệnh xương khớp</h4>
+      <p>Câu chuyện về người phụ nữ đối phó với chứng bệnh xương hiếm gặp dễ gãy. Sau khi từ bỏ danh tính "người bệnh", cô đã hồi phục, phim chụp X-quang không còn dấu vết nứt gãy cũ.</p>
+      
+      <h4>2. Chữa lành từ sự oán giận</h4>
+      <p>Người phụ nữ bị bệnh tuyến giáp tự miễn nghiêm trọng lúc ly hôn. Bằng cách thực hành lòng biết ơn và xả bỏ cảm xúc độc hại, cô đã đưa chỉ số máu về bình thường mà không cần y tế can thiệp.</p>
+    `
+  },
+  "10": {
+    chName: "Chương 10: Thông tin dẫn đến sự chuyển hóa",
+    content: `
+      <h4>1. Dữ liệu thực chứng từ các khóa học</h4>
+      <p>Dr. Joe Dispenza cung cấp kết quả từ các buổi hội thảo quét não điện não đồ (EEG). Sau vài ngày thiền tập, phần lớn học viên chuyển từ trạng thái sóng não mất trật tự sang đồng bộ và cân bằng.</p>
+      
+      <h4>2. Trạng thái cực lạc và điều hòa hệ thần kinh</h4>
+      <p>Dữ liệu cho thấy năng lượng tăng vọt lên mức đặc biệt giải phóng các ách tắc thần kinh để tái cấu trúc cơ thể, kích hoạt các trung tâm hạnh phúc nội sinh.</p>
+    `
+  },
+  "11": {
+    chName: "Chương 11: Chuẩn bị thiền định",
+    content: `
+      <h4>1. Thời điểm vàng và môi trường lý tưởng</h4>
+      <p>Hai thời điểm tốt nhất là sáng sớm sau khi thức dậy hoặc buổi tối trước khi đi ngủ, lúc sóng não tự nhiên chuyển sang Alpha/Theta. Hãy chọn một nơi ngồi thẳng lưng yên tĩnh, tránh nằm để cơ thể không rơi vào thói quen ngủ.</p>
+      
+      <h4>2. Điều phục "con ngựa hoang" tâm trí</h4>
+      <p>Mỗi khi tâm trí đi lạc hoặc cơ thể phản kháng (ngứa ngáy, bồn chồn), hãy nhẹ nhàng đưa sự chú ý trở lại hiện tại để thiết lập lại quyền kiểm soát của ý thức.</p>
+    `
+  },
+  "12": {
+    chName: "Chương 12: Thiền thay đổi niềm tin và nhận thức",
+    content: `
+      <h4>1. Bài thực hành cốt lõi</h4>
+      <p>Hướng dẫn chi tiết cách hạ thấp sóng não về Theta, mở cánh cửa tiềm thức để ghi đè những niềm tin cũ đã lỗi thời. Khi năng lượng của quyết định mới đủ lớn, các biểu hiện sinh học của cơ thể sẽ thay đổi đồng bộ theo hướng cân bằng.</p>
+    `
+  },
+  "loki": {
+    chName: "Lời kết: Trở nên siêu nhiên",
+    content: `
+      <h4>1. Định nghĩa lại về Đức tin và "Siêu nhiên"</h4>
+      <p>Đức tin chính là khi bạn tin vào một ý nghĩ hơn bất cứ điều gì khác, đến mức cơ thể bạn chấp nhận ý nghĩ đó là sự thật sinh học.</p>
+      <p>Trở nên "siêu nhiên" là khả năng thực hiện những điều "không tự nhiên" trong cuộc sống thường nhật: yêu thương khi mọi người đang giận dữ, cho đi khi bạn đang thiếu thốn, và cảm thấy khỏe mạnh khi đang bị chẩn đoán là bệnh tật.</p>
+
+      <h4>2. Ý nghĩ là tiềm năng, Cảm xúc là hiện thực</h4>
+      <p>Ý nghĩ đơn thuần chỉ là "cảm xúc chưa được biểu hiện". Chỉ khi bạn kết hợp ý nghĩ đó với một cảm xúc mãnh liệt (lòng biết ơn, sự hân hoan), nó mới bắt đầu biến đổi thành hiện thực vật lý.</p>
+    `
+  }
+};
+
+// ─── ĐIỀU HƯỚNG TAB ───
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById(`tab-${tabId}`).classList.add('on');
+
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('p-active', 'p-pushed');
+    p.classList.add('p-hidden');
+  });
+
+  if (tabId === 'home') {
+    document.getElementById('pg-home').className = 'page p-active';
+  } else if (tabId === 'spaces') {
+    document.getElementById('pg-spaces').className = 'page p-active';
+  }
+}
+
+function returnToHome() {
+  switchTab('home');
+}
+
+// ─── ĐIỀU HƯỚNG ALBUM & CHI TIẾT SÁCH ───
+function openAlbum() {
+  const home = document.getElementById('pg-home');
+  const alb  = document.getElementById('pg-album');
+  
+  home.className = 'page p-pushed';
+  alb.className = 'page p-active';
+  
+  renderAlbum(BOOKS);
+}
+
+function closeAlbum() {
+  const home = document.getElementById('pg-home');
+  const alb  = document.getElementById('pg-album');
+  
+  alb.className = 'page p-hidden';
+  home.className = 'page p-active';
+}
+
+function openBook(idx) {
+  const b = BOOKS[idx];
+  
+  if (!b.hasContent) {
+    showToast('Cuốn sách này đang được cập nhật nội dung.');
+    return;
+  }
+
+  const alb = document.getElementById('pg-album');
+  const bookView = document.getElementById('pg-book');
+
+  document.getElementById('reader-book-title').textContent = b.t;
+  buildChapterSelector();
+  loadChapter("1");
+
+  alb.className = 'page p-pushed';
+  bookView.className = 'page p-active';
+}
+
+function closeBook() {
+  const alb = document.getElementById('pg-album');
+  const bookView = document.getElementById('pg-book');
+  
+  bookView.className = 'page p-hidden';
+  alb.className = 'page p-active';
+}
+
+// ─── TRÌNH ĐỌC SÁCH ───
+let currentFontSize = 16;
+
+function adjustFontSize(dir) {
+  currentFontSize += dir * 1.5;
+  if (currentFontSize < 12) currentFontSize = 12;
+  if (currentFontSize > 26) currentFontSize = 26;
+  document.getElementById('reader-main-content').style.fontSize = currentFontSize + 'px';
+}
+
+function buildChapterSelector() {
+  const sel = document.getElementById('chapter-selector');
+  sel.innerHTML = '';
+  for (let key in PLACEBO_DATA) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = PLACEBO_DATA[key].chName;
+    sel.appendChild(opt);
+  }
+}
+
+function loadChapter(key) {
+  const contentArea = document.getElementById('reader-main-content');
+  contentArea.innerHTML = PLACEBO_DATA[key].content;
+  document.getElementById('pg-book').scrollTop = 0;
+}
+
+// ─── AUDIO SPACES (PHÁT QUAY THỰC TẾ) ───
+let isPlayingSpace = false;
+const audioPlayer = document.getElementById('real-audio-player');
+const globalPlayerContainer = document.getElementById('global-audio-player');
+const visualizer = document.getElementById('audio-visualizer-wave');
+const playIconSvg = document.getElementById('play-icon-svg');
+const statusText = document.getElementById('player-status-str');
+
+function togglePlaySpace() {
+  isPlayingSpace = !isPlayingSpace;
+  
+  if (isPlayingSpace) {
+    audioPlayer.play().then(() => {
+      globalPlayerContainer.classList.add('on');
+      visualizer.classList.add('active');
+      playIconSvg.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+      statusText.textContent = "Đang phát trực tiếp";
+      showToast('Đang kết nối phòng nói chuyện Giới Thiệu MAS...');
+    }).catch(err => {
+      console.log("Audio play blocked by browser. User interaction needed first.", err);
+      isPlayingSpace = false;
+    });
+  } else {
+    audioPlayer.pause();
+    visualizer.classList.remove('active');
+    playIconSvg.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+    statusText.textContent = "Đang tạm dừng phát";
+    showToast('Đã tạm dừng phát âm thanh.');
+  }
+}
+
+// ─── RENDER ALBUM GRID ───
+function renderAlbum(booksList) {
+  const cont = document.getElementById('alb-content');
+  
+  cont.innerHTML = '<div class="books-grid">' +
+    booksList.map((b, localIdx) => {
+      const gIdx = BOOKS.findIndex(item => item.t === b.t);
+      const num = String(gIdx + 1).padStart(2,'0');
+      
+      const badge = b.hasContent ? '<span class="bcard-badge">Đọc thử ↗</span>' : '<span class="bcard-badge empty">Chờ dịch</span>';
+      
+      return `<div class="bcard" onclick="openBook(${gIdx})">
+        <div class="bcard-num">${num}</div>
+        <div class="bcard-title">${b.t}</div>
+        ${badge}
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ─── TÌM KIẾM ───
+const homeQ = document.getElementById('home-q');
+const homeX = document.getElementById('home-x');
+const homeRes = document.getElementById('home-results');
+const homeMn = document.getElementById('home-main');
+
+homeQ.addEventListener('input', () => {
+  const q = homeQ.value.trim();
+  homeX.style.display = q ? 'flex' : 'none';
+  if (!q) {
+    homeRes.classList.remove('on');
+    homeRes.innerHTML = '';
+    homeMn.classList.remove('off');
+    return;
+  }
+  homeMn.classList.add('off');
+  homeRes.classList.add('on');
+  const n = norm(q);
+  const res = BOOKS.filter(b => norm(b.t).includes(n));
+  if (!res.length) {
+    homeRes.innerHTML = emptyHTML('Không tìm thấy', 'Thử tìm kiếm cuốn sách khác.');
+    return;
+  }
+  homeRes.innerHTML = `<div class="res-count">${res.length} kết quả</div>` +
+    res.map(b => {
+      const globalIdx = BOOKS.findIndex(item => item.t === b.t);
+      return `<div class="res-item" onclick="openBookFromSearch(${globalIdx})">
+        <span class="rname">${hl(b.t, q)}</span>
+        <span class="rchev">›</span>
+      </div>`;
+    }).join('');
+});
+
+homeX.addEventListener('click', () => {
+  homeQ.value = ''; homeX.style.display = 'none';
+  homeRes.classList.remove('on'); homeRes.innerHTML = '';
+  homeMn.classList.remove('off'); homeQ.blur();
+});
+
+function openBookFromSearch(idx) {
+  const b = BOOKS[idx];
+  if (!b.hasContent) {
+    showToast('Cuốn sách này đang được cập nhật nội dung.');
+    return;
+  }
+  openAlbum();
+  setTimeout(() => openBook(idx), 200);
+}
+
+function focusHomeSearch() {
+  switchTab('home');
+  homeQ.focus();
+}
+
+// ─── HÀM BỔ TRỢ CHUỖI ───
+function norm(s) {
+  const m = {'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ắ':'a','ặ':'a','ằ':'a','ẵ':'a','ẳ':'a','â':'a','ấ':'a','ầ':'a','ẩ':'a','ẫ':'a','ậ':'a','đ':'d','è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ế':'e','ề':'e','ể':'e','ễ':'e','ệ':'e','ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i','ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ố':'o','ồ':'o','ổ':'o','ỗ':'o','ộ':'o','ơ':'o','ớ':'o','ờ':'o','ở':'o','ỡ':'o','ợ':'o','ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ứ':'u','ừ':'u','ử':'u','ữ':'u','ự':'u','ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y'};
+  return s.toLowerCase().replace(/./g, c => m[c] || c);
+}
+function hl(text, q) {
+  const tn = norm(text), qn = norm(q);
+  const i = tn.indexOf(qn);
+  if (i < 0) return text;
+  return text.slice(0,i) + '<span style="color:var(--blue-accent);font-weight:600">' + text.slice(i, i+q.length) + '</span>' + text.slice(i+q.length);
+}
+function emptyHTML(title, sub) {
+  return `<div class="empty-st"><div class="ei">🔍</div><div class="et">${title}</div><div class="es">${sub}</div></div>`;
+}
+
+// ─── TOAST (THÔNG BÁO) ───
+let toastTimer;
+function showToast(msg) {
+  document.getElementById('toast-msg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
+}
+</script>
+</body>
+</html>
