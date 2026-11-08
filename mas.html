@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MAS – Trang chủ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#fff;--soft:#d6d6d6;--muted:#a8a8a8;--line:#2b2b2b;--btn:#333;--sb:#c9c9c9;
+--font:"Barlow","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17.5px;line-height:30px;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+/* header */
+header{height:125px;display:flex;align-items:center;padding:0 32px 0 44px;gap:0}
+.logo{display:block;width:190px;height:30px;flex:none}
+.logo text{font-family:var(--font);font-weight:700;font-size:34px;fill:#fff}
+nav{display:flex;margin-left:62px;gap:42px;flex:1;min-width:0}
+nav a{font-weight:600;font-size:18px;text-decoration:none;display:flex;align-items:center;gap:8px;white-space:nowrap}
+nav a.dd::after{content:"";width:6px;height:6px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg) translateY(-2px)}
+.call{color:var(--muted);font-size:18px;white-space:nowrap;margin-right:48px}
+.call b{color:var(--soft);font-weight:600;text-decoration:underline}
+.icons{display:flex;gap:10px;flex:none}
+.ico{width:45px;height:45px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;border:0;cursor:pointer}
+.ico svg{width:22px;height:22px;stroke:#ddd;fill:none;stroke-width:1.5}
+.burger{display:none}
+/* layout */
+.wrap{display:grid;grid-template-columns:320px minmax(0,1040px);justify-content:center;column-gap:64px;padding:0 48px 100px;margin:0 auto;align-items:start}
+.wrap>*{margin-top:0}
+aside{padding-top:2px}
+aside ul{list-style:none;margin:0;padding:0}
+aside li{display:flex;justify-content:space-between;align-items:center;height:62.5px;font-weight:600;font-size:17.5px;color:var(--sb);cursor:pointer;padding-right:0}
+aside li:hover,aside li.on{color:#fff}
+aside li:not(.home)::after{content:"";width:7px;height:7px;border:solid #bdbdbd;border-width:1.6px 1.6px 0 0;transform:rotate(45deg);margin-right:8px}
+aside li.home{height:52px}
+aside li.home svg{width:26px;height:26px;stroke:#bdbdbd;fill:none;stroke-width:1.4;margin-right:0}
+main{min-width:0}
+h1{font-size:36px;line-height:48px;font-weight:700;margin:0;padding:0 0 18px;border-bottom:1px solid var(--line);letter-spacing:0}
+.art{padding-top:30px}
+.art p{margin:0 0 20px}
+.art hr{border:0;border-top:1px solid var(--line);margin:30px 0 32px}
+.art ol{margin:18px 0 26px;padding-left:34px}
+.art li{margin:0 0 10px;padding-left:2px}
+.art a{text-decoration:underline}
+.art ol.feat li{margin-bottom:8px}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px}
+.tw table{border-collapse:collapse;width:100%;font-size:15px;line-height:21px}
+.tw th,.tw td{padding:7px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.tw th{background:#161616;font-weight:700}
+.tw td:first-child{font-weight:600}
+.tw td:nth-child(3){color:var(--muted)}
+.tw tbody tr:last-child td{border-bottom:0}
+.right{padding-top:0}
+.search{display:flex;align-items:center;border:1px solid #5a5a5a;border-radius:4px;height:50px;padding:0 14px 0 16px;background:#050505}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:inherit;font-size:17px}
+.search input::placeholder{color:#c4c4c4}
+.search svg{width:22px;height:22px;stroke:#ddd;fill:none;stroke-width:2;flex:none}
+.sbtoggle{display:none}
+.note{border-left:3px solid #666;background:#0d0d0d;padding:16px 20px;border-radius:0 6px 6px 0;margin:30px 0 0}
+.langwrap{position:relative}
+aside li.hl{font-weight:700;color:#fff}
+html{overflow-y:scroll}body{text-rendering:optimizeLegibility}
+aside li{transition:color .2s ease,padding-left .2s ease}aside li:hover{padding-left:6px}
+.tw tbody tr{transition:background .2s ease}
+.tw th{position:sticky;top:0;z-index:1}
+.tw.all{max-height:min(420px,70vh);overflow-y:auto;overscroll-behavior:contain}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.art>*{animation:fadeUp .5s ease both}
+.tw tr.more{display:none}.tw.all tr.more{display:table-row}
+.tw tr.rev{animation:fadeUp .35s ease both}
+nav{will-change:max-height,opacity}
+.more-btn{display:block;margin:14px auto 0;background:#222;color:#fff;border:1px solid #444;border-radius:999px;padding:10px 26px;font:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s ease,transform .15s ease}
+.more-btn:hover{background:#333}.more-btn:active{transform:scale(.97)}
+.lang-menu{position:absolute;right:0;top:56px;min-width:210px;background:#161616;border:1px solid #333;border-radius:12px;padding:6px;z-index:40;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .25s ease,transform .25s ease,visibility .25s}
+.lang-menu.open{opacity:1;visibility:visible;transform:none}
+.lang-menu button{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;color:#aaa;font:inherit;font-size:18px;padding:16px 20px;border-radius:8px;cursor:pointer;text-align:left}
+.lang-menu button:hover{background:#222}
+.lang-menu button.on{color:#fff;font-weight:700}
+.lang-menu button.on::after{content:"✓";font-size:20px}
+/* large screens: scale up smoothly */
+@media(min-width:2000px){html{font-size:calc(100vw/1892*16)}body{font-size:1.094rem;line-height:1.875rem}}
+/* laptop */
+@media(max-width:1400px){
+ .wrap{grid-template-columns:280px minmax(0,1fr);column-gap:40px;padding:0 40px 80px 40px}
+ nav{gap:28px;margin-left:40px}.call{margin-right:24px}
+}
+/* tablet landscape */
+@media(max-width:1180px){
+ header{height:88px;padding:0 24px}
+ .call{display:none}
+ nav{gap:22px;margin-left:30px}nav a{font-size:16px}
+ .wrap{grid-template-columns:260px minmax(0,1fr);column-gap:36px;padding:10px 24px 70px}
+ .right{grid-column:1/-1;grid-row:1;margin-bottom:24px}
+ aside{grid-row:2}main{grid-row:2}
+ h1{font-size:32px;line-height:42px}
+}
+/* tablet portrait / phone */
+@media(max-width:860px){
+ header{height:68px;padding:0 16px;position:relative}
+ .logo{width:150px;height:24px}.logo text{font-size:34px}
+ .burger{display:flex}
+ nav{display:flex;position:absolute;top:68px;left:0;right:0;background:#0b0b0b;flex-direction:column;gap:0;margin:0;padding:0 16px;z-index:20;border-bottom:1px solid var(--line);max-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1),opacity .3s ease,padding .4s ease,visibility .4s}
+ nav.open{max-height:420px;opacity:1;visibility:visible;padding:8px 16px 16px}
+ nav a{padding:14px 0;font-size:17px}
+ .icons{margin-left:auto}
+ .ico{width:40px;height:40px}.ico svg{width:20px;height:20px}
+ .wrap{grid-template-columns:1fr;padding:6px 16px 60px;row-gap:0}
+ .right{grid-row:1;margin-bottom:18px}
+ aside{grid-row:3;margin-top:36px;border-top:1px solid var(--line)}
+ main{grid-row:2}
+ aside li{height:56px}
+ body{font-size:16.5px;line-height:28px}
+ h1{font-size:25px;line-height:33px;padding-bottom:16px}
+ .art ol{padding-left:26px}
+}
+@media(max-width:380px){h1{font-size:22px;line-height:30px}.logo{width:130px}}
+@media(max-width:700px){.tw{border:0;overflow:visible}.tw table,.tw tbody,.tw tr,.tw td{display:block}.tw thead{display:none}.tw tr{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:8px 12px;background:#0b0b0b}.tw td{border:0;padding:3px 0}.tw td:first-child{font-size:16px;color:#fff;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid var(--line)}.tw td:not(:first-child)::before{content:attr(data-label) ": ";color:#8c8c8c;font-weight:600}}
+@media(max-width:700px){.tw.all{overflow-y:auto}.tw.all tr.more{display:block}}
+.more-link{text-decoration:underline;cursor:pointer;font-weight:600;white-space:nowrap}
+.pop{position:fixed;z-index:50;background:#111;border:1px solid #333;border-radius:10px;padding:14px 16px;width:min(340px,calc(100vw - 24px));box-shadow:0 12px 32px rgba(0,0,0,.6);opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .25s ease,transform .25s ease,visibility .25s}
+.pop.open{opacity:1;visibility:visible;transform:none}
+.pop h4{margin:0 0 8px;font-size:17px;line-height:24px}
+.pop.menu{padding:6px;width:auto;min-width:210px;max-width:calc(100vw - 24px);box-shadow:none;border-radius:12px;background:#161616}
+.pop .pi{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:16px 20px;border-radius:8px;font-size:18px;line-height:26px;color:#aaa;cursor:default}
+.pop .pi.t{color:#fff;font-weight:700}
+.pop .pi.t::after{content:"✓";font-size:20px}
+.pop .pi:hover{background:#222}
+.pop p{margin:0;font-size:16px;line-height:24px;color:#bbb}
+.pop .sc{max-height:96px;overflow-y:auto;overscroll-behavior:contain;padding-right:6px}
+.pop ul{margin:0;padding-left:20px;list-style:disc}
+.pop li{margin:0 0 6px;font-size:16px;line-height:24px;color:#ddd}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <a href="#" aria-label="MAS"><svg class="logo" viewBox="0 0 190 30" preserveAspectRatio="xMinYMid meet"><text x="0" y="26" textLength="92" lengthAdjust="spacing">MAS</text></svg></a>
+  <nav id="nav">
+    <a class="dd" href="#" data-en="Personal">Riêng tư</a><a class="dd" href="#" data-en="Business">Việc kinh doanh</a><a class="dd" href="#" data-en="Learn">Học hỏi</a><a class="dd" href="#" data-en="Support">Ủng hộ</a><a class="dd" href="#" data-en="Company">Công ty</a><a href="#" data-en="Shop">Cửa hàng</a>
+  </nav>
+  <span class="call" data-en="Call <b>(888) GO-MAS</b>">Gọi <b>(888) GO-MAS</b></span>
+  <div class="icons">
+    <div class="langwrap"><button class="ico" id="lg" aria-label="Language" aria-haspopup="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="4.2" ry="9.5"/><path d="M2.5 12h19M4 7.5h16M4 16.5h16"/></svg></button><div class="lang-menu" id="lm" role="menu"><button data-l="vi" role="menuitem">Tiếng Việt</button><button data-l="en" role="menuitem">English</button></div></div>
+    <button class="ico" aria-label="Tài khoản"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4 21c0-4.2 3.6-6.5 8-6.5s8 2.3 8 6.5z"/></svg></button>
+    <button class="ico burger" id="bg" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+<div class="wrap">
+  <aside>
+    <ul>
+      <li class="home"><span data-en="MAS Home">Trang chủ MAS</span> <svg viewBox="0 0 24 24"><path d="M3 11.5L12 3.5l9 8M5.5 10v10.5h13V10"/></svg></li>
+      <li data-en="Book names &amp; topic lists">Tên và danh sách chủ đề sách</li><li data-en="Plan activation">Kích hoạt gói</li><li data-en="Premium">Premium</li><li data-en="Safety Center">Trung Tâm An Toàn</li><li data-en="Account">Tài khoản</li><li data-en="Business">Doanh nghiệp</li><li data-en="Setup &amp; Settings">Thiết lập &amp; Cài đặt</li><li class="hl" data-en="Rare Books">Sách Hiếm</li><li data-en="Troubleshooting">Khắc phục sự cố</li>
+    </ul>
+  </aside>
+  <main>
+    <h1>MAS V1.2 (8/11/2026)</h1>
+    <div class="art">
+      <p data-en="Our improvements in this new update include:">Các cải tiến của chúng tôi trong bản cập nhật mới này bao gồm:</p>
+      <ol class="feat">
+        <li data-en="New book output and major bug fixes">Sản lượng Sách Mới và Vá các lỗi lớn</li>
+        <li data-en="Overall interface and strong integration">Giao diện tổng thể và tích hợp mạnh</li>
+        <li data-en="Ask the chatbot with unlimited usage">Hỏi chatbot với sản lượng không giới hạn</li>
+        <li data-en="Read on every type of device">Mọi loại thiết bị để đọc</li>
+        <li data-en="In-depth lookup of specialized terms">Tra cứu từ ngữ chuyên môn sâu</li>
+        <li data-en="Explanations and summaries for each page, the whole book, or each chapter">Giải thích và tóm tắt từng trang và cả cuốn sách hoặc từng chương</li>
+        <li data-en="Filter by topic and author">Lọc chủ đề và tác giả</li>
+        <li data-en="Quote raw source document text">Trích dẫn văn bản tài liệu gốc thô</li>
+        <li data-en="Personalized, user-created annotations">Chú thích tự tạo bởi cá nhân hóa người dùng</li>
+      </ol>
+      <div class="tw"><table>
+        <thead><tr><th data-en="Criteria">Tiêu chí</th><th>MAS</th><th data-en="Audiobook apps">App nghe sách nói</th><th data-en="MAS advantage">Lợi thế của MAS</th></tr></thead>
+        <tbody>
+        <tr><td data-en="Speed of intake">Tốc độ tiếp nhận</td><td data-en="Content summaries">Tóm tắt nội dung</td><td data-en="Listen for the book's full length">Nghe theo thời lượng sách</td><td data-en="Saves time">Tiết kiệm thời gian</td></tr>
+        <tr><td data-en="Information lookup">Tra cứu thông tin</td><td data-en="Direct search">Tìm kiếm trực tiếp</td><td data-en="Must seek to the passage you need">Phải tua đến đoạn cần nghe</td><td data-en="Fast retrieval">Truy xuất nhanh</td></tr>
+        <tr><td data-en="Grasping book structure">Nắm cấu trúc sách</td><td data-en="Split by chapter and section">Chia theo chương, mục</td><td data-en="Sequential intake">Tiếp nhận tuần tự</td><td data-en="Easy to see the big picture">Dễ hình dung tổng thể</td></tr>
+        <tr><td data-en="Figures &amp; data">Số liệu</td><td data-en="Extracted into tables">Trích xuất thành bảng</td><td data-en="Absorbed through audio">Tiếp nhận qua âm thanh</td><td data-en="Easy to remember and cross-check">Dễ ghi nhớ và đối chiếu</td></tr>
+        <tr><td data-en="Charts">Biểu đồ</td><td data-en="Visual presentation">Trình bày trực quan</td><td data-en="Inconvenient">Không thuận tiện</td><td data-en="Understand trends quickly">Hiểu xu hướng nhanh</td></tr>
+        <tr><td data-en="Formulas">Công thức</td><td data-en="Displayed directly">Hiển thị trực tiếp</td><td data-en="Must listen to explanations">Phải nghe diễn giải</td><td data-en="Easy to verify and apply">Dễ kiểm tra và áp dụng</td></tr>
+        <tr><td data-en="Case studies">Case study</td><td data-en="Broken down into structure">Bóc tách thành cấu trúc</td><td data-en="Listen to the story">Nghe câu chuyện</td><td data-en="Easy to analyze">Dễ phân tích</td></tr>
+        <tr><td data-en="Comparing multiple models">So sánh nhiều mô hình</td><td data-en="Placed side by side">Đặt cạnh nhau</td><td data-en="Must remember what was heard">Phải nhớ nội dung đã nghe</td><td data-en="Convenient comparison">Đối chiếu thuận tiện</td></tr>
+        <tr><td data-en="Specialized books">Sách chuyên ngành</td><td data-en="Can be organized by specific field">Có thể tổ chức theo lĩnh vực đặc thù</td><td data-en="Hard to absorb jargon and complex data via audio">Khó tiếp nhận thuật ngữ và dữ liệu phức tạp qua âm thanh</td><td data-en="Suited to in-depth research">Phù hợp nghiên cứu chuyên sâu</td></tr>
+        <tr><td data-en="Notes">Ghi chú</td><td data-en="Can highlight and copy">Có thể đánh dấu, sao chép</td><td data-en="Must take notes while listening">Phải ghi chú khi nghe</td><td data-en="Easy to systematize">Thuận tiện hệ thống hóa</td></tr>
+        <tr><td data-en="Knowledge linking">Liên kết kiến thức</td><td data-en="Connects multiple books">Kết nối nhiều cuốn sách</td><td data-en="Mostly per single title">Chủ yếu theo từng đầu sách</td><td data-en="Builds a cross-disciplinary knowledge base">Xây dựng kho tri thức liên ngành</td></tr>
+        <tr><td data-en="In-depth learning">Học tập chuyên sâu</td><td data-en="Text + data + charts">Văn bản + dữ liệu + biểu đồ</td><td data-en="Mostly listening and memorizing">Chủ yếu nghe và ghi nhớ</td><td data-en="Better research support">Hỗ trợ nghiên cứu tốt hơn</td></tr>
+        </tbody></table></div>
+        <button class="more-btn" id="mb" type="button"></button>
+      <p class="note" data-en="<b>Worth noting:</b> We will become number 1 in book count by around the end of Q1 2027, with over 60,000 fully summarized books (including rare books that are hard to find in any other app) with quality data, per MAS 1.2, according to our designer's post. Early activation is extremely difficult because we are non-commercial. <a href='#' class='more-link' data-pop='roadmap'>Learn more</a>"><b>Đáng Lưu Tâm:</b> Chúng tôi sẽ trở thành số 1 về số lượng sách vào khoảng hết quý I/2027 với số lượng sách trên 60000 cuốn tóm tắt đầy đủ (bao gồm các sách hiếm và khó được xem ở bất kì app nào) có dữ liệu tốt theo bản MAS 1.2 theo bài đăng của nhà thiết kế chúng tôi, việc kích hoạt sớm là cực kỳ khó vì chúng tôi không thương mại. <a href="#" class="more-link" data-pop="roadmap">Tìm hiểu thêm</a></p>
+    </div>
+  </main>
+</div>
+<script>
+var nav=document.getElementById('nav'),bg=document.getElementById('bg'),lg=document.getElementById('lg'),lm=document.getElementById('lm');
+bg.addEventListener('click',function(){lm.classList.remove('open');closePop();nav.classList.toggle('open')});
+var LANG='vi',tw=document.querySelector('.tw'),mb=document.getElementById('mb'),trs=tw.querySelectorAll('tbody tr'),LIM=4;
+trs.forEach(function(r,i){if(i>=LIM)r.classList.add('more')});
+function updateBtn(){var o=tw.classList.contains('all'),n=trs.length;mb.textContent=LANG==='en'?(o?'Show less':'Show all ('+n+' criteria)'):(o?'Thu gọn':'Xem tất cả ('+n+' tiêu chí)')}
+mb.addEventListener('click',function(){var o=tw.classList.toggle('all');trs.forEach(function(r,i){if(i>=LIM)r.classList.toggle('rev',o)});updateBtn();if(!o)tw.scrollIntoView({behavior:'smooth',block:'center'})});
+lg.addEventListener('click',function(e){e.stopPropagation();closePop();nav.classList.remove('open');lm.classList.toggle('open')});
+document.addEventListener('click',function(e){lm.classList.remove('open');if(!nav.contains(e.target)&&!bg.contains(e.target))nav.classList.remove('open')});
+function setLang(l){
+ document.documentElement.lang=l;
+ document.title=l==='en'?'MAS – Home':'MAS – Trang chủ';
+ document.querySelectorAll('[data-en]').forEach(function(e){if(!e.hasAttribute('data-vi'))e.setAttribute('data-vi',e.innerHTML);e.innerHTML=l==='en'?e.getAttribute('data-en'):e.getAttribute('data-vi')});
+ lm.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.l===l)});
+ var th=document.querySelectorAll('.tw th');document.querySelectorAll('.tw tbody tr').forEach(function(r){r.querySelectorAll('td').forEach(function(c,i){c.setAttribute('data-label',th[i].textContent)})});
+ LANG=l;updateBtn();closePop();
+ try{localStorage.setItem('mas-lang',l)}catch(x){}
+}
+lm.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){setLang(b.dataset.l);lm.classList.remove('open')})});
+var pop=document.createElement('div');pop.className='pop';document.body.appendChild(pop);var popA=null;
+function closePop(){pop.classList.remove('open');popA=null}
+function openPop(a,h,m){lm.classList.remove('open');nav.classList.remove('open');if(popA===a){closePop();return}pop.className='pop'+(m?' menu':'');pop.innerHTML=h;pop.classList.add('open');popA=a;var r=a.getBoundingClientRect(),w=pop.offsetWidth,hh=pop.offsetHeight,l=Math.max(12,Math.min(m?r.right-w:r.left,innerWidth-w-12)),t=m?r.bottom-4:r.bottom+8;if(t+hh>innerHeight-12)t=Math.max(12,r.top-hh-8);pop.style.left=l+'px';pop.style.top=t+'px'}
+function roadmap(){var en=LANG==='en',d=[['T11/2026','Nov 2026','2.700','2,700'],['T12/2026','Dec 2026','15.000','15,000'],['T1/2027','Jan 2027','15.000','15,000'],['T2/2027','Feb 2027','15.000','15,000'],['T3/2027','Mar 2027','15.000','15,000']];return '<h4>'+(en?'Roadmap to 60,000 books':'Quy trình tiến tới mốc 60.000 cuốn')+'</h4><div class="sc"><ul>'+d.map(function(x){return '<li>'+(en?x[1]+': '+x[3]:x[0]+': '+x[2])+'</li>'}).join('')+'</ul></div>'}
+document.querySelectorAll('aside li').forEach(function(li){li.addEventListener('click',function(e){e.stopPropagation();openPop(li,'<div class="pi t">'+li.textContent.trim()+'</div><div class="pi">'+(LANG==='en'?'Content is being updated.':'Nội dung đang được cập nhật.')+'</div>',1)})});
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-pop]');if(a){e.preventDefault();e.stopPropagation();openPop(a,roadmap());return}if(!pop.contains(e.target))closePop()});
+window.addEventListener('scroll',closePop,{passive:true});window.addEventListener('resize',closePop);
+var cur='vi';try{cur=localStorage.getItem('mas-lang')||'vi'}catch(x){}
+setLang(cur==='en'?'en':'vi');
+</script>
+</body>
+</html>
